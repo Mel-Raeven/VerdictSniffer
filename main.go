@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -76,6 +78,12 @@ type Vindplaats struct {
 func main() {
 	url := "https://uitspraken.rechtspraak.nl/api/zoek"
 
+	// Prompt user for a location keyword
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter a location keyword (e.g., 'urk'): ")
+	location, _ := reader.ReadString('\n')
+	location = strings.TrimSpace(location) // Remove any leading/trailing whitespace
+
 	// Initialize parameters for pagination
 	startRow := 0
 	pageSize := 10
@@ -88,7 +96,7 @@ func main() {
 		ShouldCountFacets:      true,
 		SortOrder:              "UitspraakDatumDesc",
 		SearchTerms: []SearchTerm{
-			{Term: "urk", Field: "Samenvatting"},
+			{Term: location, Field: "Samenvatting"}, // Use the user-provided location keyword
 		},
 		Contentsoorten:  []string{},
 		Rechtsgebieden:  []string{},
@@ -149,8 +157,6 @@ func main() {
 			break // Exit the loop if no results are returned
 		}
 
-		println("Fetched cases:", len(response.Results))
-
 		// Scan for the keywords "drug" or "drugs"
 		resultsFound := scanForKeywords(response.Results)
 		if resultsFound {
@@ -163,7 +169,7 @@ func main() {
 
 	// Print if no results were found at all
 	if !anyResultsFound {
-		fmt.Println("0 results found containing specified keywords.")
+		fmt.Println("0 results found.")
 	}
 }
 
@@ -177,8 +183,8 @@ func scanForKeywords(results []Result) bool {
 			fmt.Println("Summary:", result.Tekstfragment)
 			fmt.Println("Link:", result.DeeplinkUrl)
 			fmt.Println("-------------------------------")
-			found = true // Set flag to true if a match is found
+			found = true
 		}
 	}
-	return found // Return whether any matches were found
+	return found
 }
