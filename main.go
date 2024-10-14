@@ -96,7 +96,7 @@ func main() {
 		ShouldCountFacets:      true,
 		SortOrder:              "UitspraakDatumDesc",
 		SearchTerms: []SearchTerm{
-			{Term: location, Field: "Samenvatting"}, // Use the user-provided location keyword
+			{Term: location, Field: "AlleVelden"}, // Use the user-provided location keyword
 		},
 		Contentsoorten:  []string{},
 		Rechtsgebieden:  []string{},
