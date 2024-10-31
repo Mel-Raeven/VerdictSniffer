@@ -84,6 +84,13 @@ func main() {
 	location, _ := reader.ReadString('\n')
 	location = strings.TrimSpace(location) // Remove any leading/trailing whitespace
 
+	// Read words from the provided txt file
+	words, err := readWordsFromFile("words.txt")
+	if err != nil {
+		fmt.Println("Error reading words from file:", err)
+		return
+	}
+
 	// Initialize parameters for pagination
 	startRow := 0
 	pageSize := 10
@@ -157,8 +164,8 @@ func main() {
 			break // Exit the loop if no results are returned
 		}
 
-		// Scan for the keywords "drug" or "drugs"
-		resultsFound := scanForKeywords(response.Results)
+		// Scan for keywords from the txt file
+		resultsFound := scanForKeywords(response.Results, words)
 		if resultsFound {
 			anyResultsFound = true // Set flag if any results were found
 		}
@@ -173,17 +180,39 @@ func main() {
 	}
 }
 
-// scanForKeywords scans case summaries for the keywords "drug" or "drugs".
-func scanForKeywords(results []Result) bool {
+func readWordsFromFile(filename string) ([]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var words []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		words = append(words, strings.TrimSpace(scanner.Text()))
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return words, nil
+}
+
+func scanForKeywords(results []Result, keywords []string) bool {
 	found := false // Flag to track if any matches were found
 	for _, result := range results {
 		summary := strings.ToLower(result.Tekstfragment)
-		if strings.Contains(summary, "drug") || strings.Contains(summary, "drugs") {
-			fmt.Println("Found in Title:", result.Titel)
-			fmt.Println("Summary:", result.Tekstfragment)
-			fmt.Println("Link:", result.DeeplinkUrl)
-			fmt.Println("-------------------------------")
-			found = true
+		for _, keyword := range keywords {
+			if strings.Contains(summary, keyword) {
+				fmt.Println("Found in Title:", result.Titel)
+				fmt.Println("Summary:", result.Tekstfragment)
+				fmt.Println("Link:", result.DeeplinkUrl)
+				fmt.Println("-------------------------------")
+				found = true
+				break
+			}
 		}
 	}
 	return found
