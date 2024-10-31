@@ -95,6 +95,7 @@ func main() {
 	// Initialize parameters for pagination
 	startRow := 0
 	pageSize := 10
+	writtenToLogCount := 0
 
 	// Create the request payload
 	requestBody := SearchRequest{
@@ -131,6 +132,9 @@ func main() {
 		return
 	}
 	defer logFile.Close()
+
+	// Start timer
+	startTime := time.Now()
 
 	// Variable to track if any matches were found
 	anyResultsFound := false
@@ -183,15 +187,22 @@ func main() {
 		resultsFound := scanAndLogKeywords(response.Results, words, logFile)
 		if resultsFound {
 			anyResultsFound = true // Set flag if any results were found
+			writtenToLogCount += 1
 		}
 
 		// Increment the start row for the next batch of results
 		startRow += pageSize
+
+		// Display progress
+		elapsed := time.Since(startTime).Seconds()
+		fmt.Printf("\rTime elapsed: %.2fs | Items written to log: %d", elapsed, writtenToLogCount)
 	}
 
 	// Print if no results were found at all
 	if !anyResultsFound {
-		fmt.Println("0 results found.")
+		fmt.Println("\n0 results found.")
+	} else {
+		fmt.Println("\nSearch completed.")
 	}
 }
 
