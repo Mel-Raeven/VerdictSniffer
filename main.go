@@ -83,7 +83,7 @@ func main() {
 	fmt.Print("Enter a location keyword (e.g., 'urk'): ")
 	location, _ := reader.ReadString('\n')
 	location = strings.TrimSpace(location) // Remove any leading/trailing whitespace
-
+	fmt.Print("-------------------------------")
 	// Read words from the provided txt file
 	words, err := readWordsFromFile("words.txt")
 	if err != nil {
