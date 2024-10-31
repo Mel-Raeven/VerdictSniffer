@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // Define the request structure
@@ -83,7 +84,7 @@ func main() {
 	fmt.Print("Enter a location keyword (e.g., 'urk'): ")
 	location, _ := reader.ReadString('\n')
 	location = strings.TrimSpace(location) // Remove any leading/trailing whitespace
-	fmt.Print("-------------------------------")
+
 	// Read words from the provided txt file
 	words, err := readWordsFromFile("words.txt")
 	if err != nil {
@@ -116,6 +117,20 @@ func main() {
 		CorrelationId:    "cc7a7c98d8bb4c6cb9de8babea65b402",
 		Proceduresoorten: []string{},
 	}
+
+	// Create logs directory if it doesn't exist
+	if _, err := os.Stat("logs"); os.IsNotExist(err) {
+		os.Mkdir("logs", 0755)
+	}
+
+	// Generate log file with unique date
+	logFileName := fmt.Sprintf("logs/results_%s.log", time.Now().Format("20060102_150405"))
+	logFile, err := os.Create(logFileName)
+	if err != nil {
+		fmt.Println("Error creating log file:", err)
+		return
+	}
+	defer logFile.Close()
 
 	// Variable to track if any matches were found
 	anyResultsFound := false
@@ -164,8 +179,8 @@ func main() {
 			break // Exit the loop if no results are returned
 		}
 
-		// Scan for keywords from the txt file
-		resultsFound := scanForKeywords(response.Results, words)
+		// Scan for keywords from the txt file and log results
+		resultsFound := scanAndLogKeywords(response.Results, words, logFile)
 		if resultsFound {
 			anyResultsFound = true // Set flag if any results were found
 		}
@@ -200,16 +215,15 @@ func readWordsFromFile(filename string) ([]string, error) {
 	return words, nil
 }
 
-func scanForKeywords(results []Result, keywords []string) bool {
+func scanAndLogKeywords(results []Result, keywords []string, logFile *os.File) bool {
 	found := false // Flag to track if any matches were found
 	for _, result := range results {
 		summary := strings.ToLower(result.Tekstfragment)
 		for _, keyword := range keywords {
 			if strings.Contains(summary, keyword) {
-				fmt.Println("Found in Title:", result.Titel)
-				fmt.Println("Summary:", result.Tekstfragment)
-				fmt.Println("Link:", result.DeeplinkUrl)
-				fmt.Println("-------------------------------")
+				logEntry := fmt.Sprintf("Found in Title: %s\nSummary: %s\nLink: %s\n-------------------------------\n",
+					result.Titel, result.Tekstfragment, result.DeeplinkUrl)
+				logFile.WriteString(logEntry)
 				found = true
 				break
 			}
