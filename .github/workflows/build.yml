@@ -25,4 +25,4 @@ jobs:
       - name: Build the executable
         run: |
           mkdir -p builds
-          GOOS=windows GOARCH=amd64 go build -o builds/verdictsniffer.exe .
+          GOOS=windows GOARCH=amd64 go build -o builds/verdictsniffer.exe main.go
